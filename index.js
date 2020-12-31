@@ -100,6 +100,7 @@ function fetchMatchJson(match_link) {
  * @param {string} bm_link url of the beatmap (with diff selected)
  * @param {boolean} difficulty_specifics set this to true if you want info from difficulty specifics
  * @return {string} beatmap info requested
+ * @customFunction
  */
 function get_beatmap_info(info, bm_link, difficulty_specifics = false) {
 	let beatmap_json = "";
@@ -167,6 +168,7 @@ function get_beatmap_info(info, bm_link, difficulty_specifics = false) {
  * @param {boolean} get_statistics_specifics set this to true if you wish to get info from statistics specifics
  * @param {string} mode osu!mode to pull data from (osu, taiko, ctb, mania)
  * @return {string} infomation of the player
+ * @customFunction
  */
 function get_user_info(
 	info,
@@ -203,6 +205,7 @@ function get_user_info(
  * Order as follows:
  * Beatmap ID
  * Player Name | Mods | Max Combo | Accurancy | Score
+ * @customFunction
  */
 function get_match_scores(match_link) {
 	// let match_link = "https://osu.ppy.sh/community/matches/70533573";
