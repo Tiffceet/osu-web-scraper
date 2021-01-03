@@ -332,3 +332,118 @@ function get_match_scores_json_mode(json_inp) {
 
 	return ret_arr;
 }
+
+/**
+ * Get BZT S2 qualifiers score from mp_link. This function assumes that the referee did not make any mistake and there are no extra matches
+ * @param {string} mp_link url of the multiplayer link
+ * @param {string} bzt_set set this to "A" for Set A and "C" for set C
+ * @customFunction
+ */
+function qualifiers(mp_link, bzt_set) {
+	let match_json = {};
+	try {
+		match_json = fetchMatchJson(mp_link);
+		match_json = JSON.parse(match_json);
+	} catch (e) {
+		return "Invalid match link !";
+	}
+
+	// Cross-match users
+	let users = {};
+	for (let i = 0; i < match_json["users"].length; i++) {
+		users[match_json["users"][i].id] = match_json["users"][i].username;
+	}
+
+	let events_fil = match_json["events"].filter((val, idx, self) => {
+		if (typeof val.detail.type === "undefined") {
+			return false;
+		}
+
+		if (val.detail.type != "other") {
+			return false;
+		}
+
+		if (typeof val.game === "undefined") {
+			return false;
+		}
+		return true;
+	});
+
+	let evt = [];
+
+	for (let i = 0; i < events_fil.length; i++) {
+		evt.push({
+			beatmap_id: events_fil[i].game.beatmap.id,
+			scores: events_fil[i].game.scores.map((val) => {
+				return {
+					user_name: users[val.user_id],
+					mods: val.mods,
+					max_combo: val.max_combo,
+					accurancy: val.accuracy,
+					score: val.score,
+				};
+			}),
+		});
+	}
+
+	const SET_A = {
+		NM1: 1100763,
+		NM2: 2039004,
+		NM3: 2233313,
+		NM4: 1506487,
+		HD1: 2135427,
+		HD2: 1794942,
+		HR1: 650249,
+		HR2: 1535887,
+		DT1: 2014148,
+		DT2: 889235,
+	};
+
+	const SET_C = {
+		NM1: 1055818,
+		NM2: 281069,
+		NM3: 2072692,
+		NM4: 776594,
+		HD1: 2179768,
+		HD2: 116382,
+		HR1: 1712791,
+		HR2: 2619929,
+		DT1: 1085199,
+		DT2: 2414458,
+	};
+
+	let set_arr = bzt_set == "A" ? SET_A : SET_C;
+
+	// Prefill the array
+	let ret_arr = [];
+	for (let i = 0; i < 30; i++) {
+		ret_arr[i] = [];
+	}
+
+	let user_keys = Object.keys(users);
+	// For each users
+	for (let i = 0; i < user_keys.length; i++) {
+		ret_arr[i][0] = users[user_keys[i]];
+
+		let bm_map_keys = Object.keys(set_arr);
+		for (let k = 0; k < bm_map_keys.length; k++) {
+			let found_score = null;
+			for (let j = 0; j < evt.length; j++) {
+				found_score = evt[j].scores.find((val) => {
+					return (
+						val.user_name == users[user_keys[i]] &&
+						evt[j].beatmap_id == set_arr[bm_map_keys[k]]
+					);
+                });
+                if(found_score) {
+                    break;
+                }
+			}
+			if (found_score) {
+				ret_arr[i][k * 2 + 1] = found_score.score;
+				ret_arr[i][k * 2 + 2] = "";
+			}
+		}
+	}
+	return ret_arr;
+}
