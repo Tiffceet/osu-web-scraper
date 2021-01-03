@@ -351,7 +351,10 @@ function qualifiers(mp_link, bzt_set) {
 	// Cross-match users
 	let users = {};
 	for (let i = 0; i < match_json["users"].length; i++) {
-		users[match_json["users"][i].id] = match_json["users"][i].username;
+		users[match_json["users"][i].id] = {
+            idx: i,
+            name: match_json["users"][i].username
+        };
 	}
 
 	let events_fil = match_json["events"].filter((val, idx, self) => {
@@ -376,7 +379,8 @@ function qualifiers(mp_link, bzt_set) {
 			beatmap_id: events_fil[i].game.beatmap.id,
 			scores: events_fil[i].game.scores.map((val) => {
 				return {
-					user_name: users[val.user_id],
+                    user_id: val.user_id,
+					user_name: users[val.user_id].name,
 					mods: val.mods,
 					max_combo: val.max_combo,
 					accurancy: val.accuracy,
@@ -387,63 +391,75 @@ function qualifiers(mp_link, bzt_set) {
 	}
 
 	const SET_A = {
-		NM1: 1100763,
-		NM2: 2039004,
-		NM3: 2233313,
-		NM4: 1506487,
-		HD1: 2135427,
-		HD2: 1794942,
-		HR1: 650249,
-		HR2: 1535887,
-		DT1: 2014148,
-		DT2: 889235,
+		1100763: 1,
+		2039004: 3,
+		2233313: 5,
+		1506487: 7,
+		2135427: 9,
+		1794942: 11,
+		650249: 13,
+		1535887: 15,
+		2014148: 17,
+		889235: 19,
 	};
 
 	const SET_C = {
-		NM1: 1055818,
-		NM2: 281069,
-		NM3: 2072692,
-		NM4: 776594,
-		HD1: 2179768,
-		HD2: 116382,
-		HR1: 1712791,
-		HR2: 2619929,
-		DT1: 1085199,
-		DT2: 2414458,
+		1055818: 1,
+		281069: 3,
+		2072692: 5,
+		776594: 7,
+		2179768: 9,
+		116382: 11,
+		1712791: 13,
+		2619929: 15,
+		1085199: 17,
+		2414458: 19,
 	};
 
 	let set_arr = bzt_set == "A" ? SET_A : SET_C;
 
 	// Prefill the array
-	let ret_arr = [];
-	for (let i = 0; i < 30; i++) {
-		ret_arr[i] = [];
-	}
+    let ret_arr = [];
+    
+    let users_keys = Object.keys(users);
+	for (let i = 0; i < users_keys.length; i++) {
+		ret_arr[ users[users_keys[i]].idx ] = [ users[users_keys[i]].name ];
+    }
 
-	let user_keys = Object.keys(users);
-	// For each users
-	for (let i = 0; i < user_keys.length; i++) {
-		ret_arr[i][0] = users[user_keys[i]];
-
-		let bm_map_keys = Object.keys(set_arr);
-		for (let k = 0; k < bm_map_keys.length; k++) {
-			let found_score = null;
-			for (let j = 0; j < evt.length; j++) {
-				found_score = evt[j].scores.find((val) => {
-					return (
-						val.user_name == users[user_keys[i]] &&
-						evt[j].beatmap_id == set_arr[bm_map_keys[k]]
-					);
-                });
-                if(found_score) {
-                    break;
-                }
-			}
-			if (found_score) {
-				ret_arr[i][k * 2 + 1] = found_score.score;
-				ret_arr[i][k * 2 + 2] = "";
-			}
+	for (let i = 0; i < evt.length; i++) {
+		let event_score = evt[i].scores;
+		let bm_id = evt[i].beatmap_id;
+		for (let j = 0; j < event_score.length; j++) {
+			let score = event_score[j].score;
+            let uid = event_score[j].user_id;
+            ret_arr[ users[uid].idx ][ set_arr[bm_id] ] = score;
 		}
-	}
+    }
+
+	// let user_keys = Object.keys(users);
+	// // For each users
+	// for (let i = 0; i < user_keys.length; i++) {
+	// 	ret_arr[i][0] = users[user_keys[i]];
+
+	// 	let bm_map_keys = Object.keys(set_arr);
+	// 	for (let k = 0; k < bm_map_keys.length; k++) {
+	// 		let found_score = null;
+	// 		for (let j = 0; j < evt.length; j++) {
+	// 			found_score = evt[j].scores.find((val) => {
+	// 				return (
+	// 					val.user_name == users[user_keys[i]] &&
+	// 					evt[j].beatmap_id == set_arr[bm_map_keys[k]]
+	// 				);
+	//             });
+	//             if(found_score) {
+	//                 break;
+	//             }
+	// 		}
+	// 		if (found_score) {
+	// 			ret_arr[i][k * 2 + 1] = found_score.score;
+	// 			ret_arr[i][k * 2 + 2] = "";
+	// 		}
+	// 	}
+	// }
 	return ret_arr;
 }
