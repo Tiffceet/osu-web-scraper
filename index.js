@@ -432,7 +432,10 @@ function qualifiers(mp_link, bzt_set) {
 		for (let j = 0; j < event_score.length; j++) {
 			let score = event_score[j].score;
             let uid = event_score[j].user_id;
-            ret_arr[ users[uid].idx ][ set_arr[bm_id] ] = score;
+            // If the lobby includes map outside of mappool
+            if(typeof set_arr[bm_id] !== "undefined") {
+                ret_arr[ users[uid].idx ][ set_arr[bm_id] ] = score;
+            }
 		}
     }
 
