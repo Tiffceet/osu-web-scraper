@@ -337,9 +337,10 @@ function get_match_scores_json_mode(json_inp) {
  * Get BZT S2 qualifiers score from mp_link. This function assumes that the referee did not make any mistake and there are no extra matches
  * @param {string} mp_link url of the multiplayer link
  * @param {string} bzt_set set this to "A" for Set A and "C" for set C
+ * @param {string} referee [OPTIONAL] the name of the player to ignore when populating the scores
  * @customFunction
  */
-function qualifiers(mp_link, bzt_set) {
+function qualifiers(mp_link, bzt_set, referee = "") {
 	let match_json = {};
 	try {
 		match_json = fetchMatchJson(mp_link);
@@ -348,13 +349,18 @@ function qualifiers(mp_link, bzt_set) {
 		return "Invalid match link !";
 	}
 
+	let ref_uid = "";
+
 	// Cross-match users
 	let users = {};
 	for (let i = 0; i < match_json["users"].length; i++) {
 		users[match_json["users"][i].id] = {
             idx: i,
             name: match_json["users"][i].username
-        };
+		};
+		if(match_json["users"][i].username == referee) {
+			ref_uid = match_json["users"][i].id;
+		}
 	}
 
 	let events_fil = match_json["events"].filter((val, idx, self) => {
@@ -423,6 +429,9 @@ function qualifiers(mp_link, bzt_set) {
     
     let users_keys = Object.keys(users);
 	for (let i = 0; i < users_keys.length; i++) {
+		if(ref_uid != "" && users_keys[i] == ref_uid) {
+			continue;
+		}
 		ret_arr[ users[users_keys[i]].idx ] = [ users[users_keys[i]].name ];
     }
 
@@ -434,6 +443,9 @@ function qualifiers(mp_link, bzt_set) {
             let uid = event_score[j].user_id;
             // If the lobby includes map outside of mappool
             if(typeof set_arr[bm_id] !== "undefined") {
+				if(ref_uid != "" && uid == ref_uid) {
+					continue;
+				}
                 ret_arr[ users[uid].idx ][ set_arr[bm_id] ] = score;
             }
 		}
