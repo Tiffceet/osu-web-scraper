@@ -273,6 +273,11 @@ function get_match_scores(match_link) {
 	return ret_arr;
 }
 
+/**
+ * Debug Function, to allow processing of raw match JSON
+ * @param {string} json_inp 
+ * @customFunction
+ */
 function get_match_scores_json_mode(json_inp) {
 	// let match_link = "https://osu.ppy.sh/community/matches/70533573";
 	let match_json = JSON.parse(json_inp);
