@@ -538,6 +538,12 @@ function match1v1(mp_link, player1_name, player2_name, warmups_played = 0, ignor
 		if (typeof val.game === "undefined") {
 			return false;
 		}
+
+		// Remove events with no scores
+		if(typeof val.game.scores !== "undefined" && val.game.scores.length == 0) {
+			return false;
+		}
+
 		return true;
 	});
 
