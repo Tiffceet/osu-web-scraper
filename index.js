@@ -378,10 +378,10 @@ function qualifiers(mp_link, bzt_set, referee = "") {
 	let users = {};
 	for (let i = 0; i < match_json["users"].length; i++) {
 		users[match_json["users"][i].id] = {
-            idx: i,
-            name: match_json["users"][i].username
+			idx: i,
+			name: match_json["users"][i].username
 		};
-		if(match_json["users"][i].username == referee) {
+		if (match_json["users"][i].username == referee) {
 			ref_uid = match_json["users"][i].id;
 		}
 	}
@@ -408,7 +408,7 @@ function qualifiers(mp_link, bzt_set, referee = "") {
 			beatmap_id: events_fil[i].game.beatmap.id,
 			scores: events_fil[i].game.scores.map((val) => {
 				return {
-                    user_id: val.user_id,
+					user_id: val.user_id,
 					user_name: users[val.user_id].name,
 					mods: val.mods,
 					max_combo: val.max_combo,
@@ -448,31 +448,31 @@ function qualifiers(mp_link, bzt_set, referee = "") {
 	let set_arr = bzt_set == "A" ? SET_A : SET_C;
 
 	// Prefill the array
-    let ret_arr = [];
-    
-    let users_keys = Object.keys(users);
+	let ret_arr = [];
+
+	let users_keys = Object.keys(users);
 	for (let i = 0; i < users_keys.length; i++) {
-		if(ref_uid != "" && users_keys[i] == ref_uid) {
+		if (ref_uid != "" && users_keys[i] == ref_uid) {
 			continue;
 		}
-		ret_arr[ users[users_keys[i]].idx ] = [ users[users_keys[i]].name ];
-    }
+		ret_arr[users[users_keys[i]].idx] = [users[users_keys[i]].name];
+	}
 
 	for (let i = 0; i < evt.length; i++) {
 		let event_score = evt[i].scores;
 		let bm_id = evt[i].beatmap_id;
 		for (let j = 0; j < event_score.length; j++) {
 			let score = event_score[j].score;
-            let uid = event_score[j].user_id;
-            // If the lobby includes map outside of mappool
-            if(typeof set_arr[bm_id] !== "undefined") {
-				if(ref_uid != "" && uid == ref_uid) {
+			let uid = event_score[j].user_id;
+			// If the lobby includes map outside of mappool
+			if (typeof set_arr[bm_id] !== "undefined") {
+				if (ref_uid != "" && uid == ref_uid) {
 					continue;
 				}
-                ret_arr[ users[uid].idx ][ set_arr[bm_id] ] = score;
-            }
+				ret_arr[users[uid].idx][set_arr[bm_id]] = score;
+			}
 		}
-    }
+	}
 
 	// let user_keys = Object.keys(users);
 	// // For each users
@@ -500,6 +500,94 @@ function qualifiers(mp_link, bzt_set, referee = "") {
 	// 	}
 	// }
 	return ret_arr;
+}
+
+/**
+ * Temporary fuction to print the score of 2 players
+ * @param {string} mp_link 
+ * @param {string} player1_name 
+ * @param {string} player2_name 
+ * @param {number} warmups_played [OPTIONAL] amount of warmup matches played before the real match
+ * @param {boolean} ignore_warning [OPTIONAL] set this to true to skip matches that dont have the correct player
+ * @customFunction
+ */
+function match1v1(mp_link, player1_name, player2_name, warmups_played = 0, ignore_warning = false) {
+	let match_json = {};
+	try {
+		match_json = fetchMatchJson(mp_link);
+		match_json = JSON.parse(match_json);
+	} catch (e) {
+		return "Invalid match link !";
+	}
+
+	// Cross-match users
+	let users = {};
+	for (let i = 0; i < match_json["users"].length; i++) {
+		users[match_json["users"][i].id] = match_json["users"][i].username;
+	}
+
+	let events_fil = match_json["events"].filter((val, idx, self) => {
+		if (typeof val.detail.type === "undefined") {
+			return false;
+		}
+
+		if (val.detail.type != "other") {
+			return false;
+		}
+
+		if (typeof val.game === "undefined") {
+			return false;
+		}
+		return true;
+	});
+
+	let p1_final_score = 0;
+	let p2_final_score = 0;
+
+	// Skip the warmup rounds
+	for (let i = warmups_played; i < events_fil.length; i++) {
+		let p1score;
+		let p2score;
+
+		p1score = events_fil[i].game.scores.find(val => {
+			return users[val.user_id] == player1_name
+		}).score;
+
+		p2score = events_fil[i].game.scores.find(val => {
+			return users[val.user_id] == player2_name
+		}).score;
+
+		if (!p1score || !p2score) {
+			if (ignore_warning)
+				continue;
+			else
+				return "One or more matches is missing one of the player, you can ignore this by setting last parmeter to true";
+		}
+
+		if (p1score > p2score) {
+			p1_final_score++;
+			continue
+		}
+		if (p1score < p2score) {
+			p2_final_score++;
+			continue;
+		}
+	}
+
+	return `${p1_final_score} - ${p2_final_score}`;
+	// let final_fomula = `=HYPERLINK("${mp_link}","${p1_final_score} - ${p2_final_score}")`;
+
+	// Get the current cell in text form, e.g. B4
+	// let ss = SpreadsheetApp.getActiveSpreadsheet();	
+	// let sheet = ss.getSheets()[0];
+	// let cell_range = sheet.getActiveCell();
+	// let selectedColumn = cell_range.getColumn();
+	// selectedColumn = String.fromCharCode("A".charCodeAt(0) + selectedColumn-1);
+  	// let selectedRow = cell_range.getRow();
+	// let cell_in_text = selectedColumn + selectedRow;
+
+	// let cell = sheet.getRange(cell_in_text);
+	// cell.setFormula(final_fomula);
 }
 
 // ======================================================================================
