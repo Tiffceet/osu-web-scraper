@@ -198,14 +198,7 @@ function get_user_info(
   if (!get_statistics_specifics) {
     return user_json[info];
   }
-  if (info == "global_rank") {
-    return user_json["statistics"]["rank"]["global"];
-  }
-  if (info == "country_rank") {
-    return user_json["statistics"]["rank"]["country"];
-  }
-
-  return user_json[info];
+  return user_json["statistics"][info];
 }
 
 /**
